@@ -1,14 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 from datetime import datetime
 import os
 
 app = Flask(__name__)
-app.secret_key = "secretkey"   # Needed for login sessions
+app.secret_key = "secretkey"
 
-# Database setup
+# ------------------ DATABASE ------------------
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///expenses.db'
 db = SQLAlchemy(app)
 
@@ -16,7 +17,7 @@ db = SQLAlchemy(app)
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
 
 # ------------------ EXPENSE MODEL ------------------
 class Expense(db.Model):
@@ -45,14 +46,19 @@ def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+
         if User.query.filter_by(username=username).first():
             flash("Username already exists!")
             return redirect(url_for("register"))
-        user = User(username=username, password=password)
+
+        hashed_pw = generate_password_hash(password)
+        user = User(username=username, password=hashed_pw)
         db.session.add(user)
         db.session.commit()
+
         flash("Registration successful! Please login.")
         return redirect(url_for("login"))
+
     return render_template("register.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -60,12 +66,14 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        user = User.query.filter_by(username=username, password=password).first()
-        if user:
+
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for("index"))
         else:
             flash("Invalid credentials")
+
     return render_template("login.html")
 
 @app.route("/logout")
@@ -135,7 +143,7 @@ def download_excel():
             "Balance": list(balances.values())
         })
         summary_df.loc[len(summary_df)] = ["Total Expenses", total]
-        summary_df.loc[len(summary_df)] = ["Each Person’s Share", share]
+        summary_df.loc[len(summary_df)] = ["Each Person's Share", share]
 
         summary_df.to_excel(writer, sheet_name="Summary", index=False)
 
@@ -144,6 +152,5 @@ def download_excel():
 # ------------------ MAIN ------------------
 if __name__ == "__main__":
     with app.app_context():
-        db.drop_all()     # reset old tables
-        db.create_all()   # create fresh tables with User + Expense
+        db.create_all()   # create tables if not exist
     app.run(debug=True)
