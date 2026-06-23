@@ -113,6 +113,40 @@ def logout():
 
 @app.route("/")
 @login_required
+def index():
+
+    expenses = Expense.query.order_by(
+        Expense.id.desc()
+    ).all()
+
+    total = sum(e.amount for e in expenses)
+
+    share = total / len(roommates) if total > 0 else 0
+
+    person_totals = {}
+
+    for e in expenses:
+        person_totals[e.person] = (
+            person_totals.get(e.person, 0)
+            + e.amount
+        )
+
+    balances = {}
+
+    for person in roommates:
+        balances[person] = (
+            person_totals.get(person, 0)
+            - share
+        )
+
+    return render_template(
+        "index.html",
+        expenses=expenses,
+        total=total,
+        share=share,
+        balances=balances,
+        person_totals=person_totals
+    )
 
 
 # ---------------- ADD EXPENSE ----------------
