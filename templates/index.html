@@ -1,125 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Room Expense Manager</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
+<h2 class="mt-4">Expense Summary</h2>
 
-<body class="container mt-4">
+<div class="card p-3 mb-3">
+    <h5>Total Room Expense: ₹{{ total }}</h5>
+    <h5>Equal Share Per Person: ₹{{ share }}</h5>
+</div>
 
-    <h1 class="mb-3">Room Expense Manager</h1>
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Name</th>
+            <th>Money Paid</th>
+            <th>Equal Share</th>
+            <th>Status</th>
+        </tr>
+    </thead>
 
-    <div class="alert alert-info">
-        Logged In User:
-        <strong>{{ current_user.person_name }}</strong>
-    </div>
+    <tbody>
 
-    <form action="/add" method="post" class="mb-4">
+        {% for person, balance in balances.items() %}
+        <tr>
 
-        <div class="mb-2">
-            <label>Person:</label>
-            <input type="text"
-                   class="form-control"
-                   value="{{ current_user.person_name }}"
-                   readonly>
-        </div>
+            <td>{{ person }}</td>
 
-        <div class="mb-2">
-            <label>Item:</label>
-            <input type="text"
-                   name="item"
-                   class="form-control"
-                   required>
-        </div>
+            <td>
+                ₹{{ share + balance }}
+            </td>
 
-        <div class="mb-2">
-            <label>Category:</label>
-            <select name="category"
-                    class="form-select"
-                    required>
-                <option value="Food">Food</option>
-                <option value="Rent">Rent</option>
-                <option value="Utilities">Utilities</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
+            <td>
+                ₹{{ share }}
+            </td>
 
-        <div class="mb-2">
-            <label>Amount:</label>
-            <input type="number"
-                   step="0.01"
-                   name="amount"
-                   class="form-control"
-                   required>
-        </div>
+            <td>
+                {% if balance > 0 %}
+                    Should Receive ₹{{ balance }}
+                {% elif balance < 0 %}
+                    Should Pay ₹{{ balance * -1 }}
+                {% else %}
+                    Settled
+                {% endif %}
+            </td>
 
-        <button type="submit"
-                class="btn btn-primary">
-            Add Expense
-        </button>
+        </tr>
+        {% endfor %}
 
-        <a href="/logout"
-           class="btn btn-danger">
-            Logout
-        </a>
-
-    </form>
-
-    <h2>Expense List</h2>
-
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Person</th>
-                <th>Item</th>
-                <th>Category</th>
-                <th>Amount</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for e in expenses %}
-            <tr>
-                <td>{{ e.date }}</td>
-                <td>{{ e.person }}</td>
-                <td>{{ e.item }}</td>
-                <td>{{ e.category }}</td>
-                <td>₹{{ e.amount }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h2>Summary</h2>
-
-    <p><strong>Total Expenses:</strong> ₹{{ total }}</p>
-
-    <p><strong>Each Person's Share:</strong> ₹{{ share }}</p>
-
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Person</th>
-                <th>Balance</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for person, balance in balances.items() %}
-            <tr>
-                <td>{{ person }}</td>
-                <td>₹{{ balance }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="/download_excel"
-       class="btn btn-success">
-       Download Excel
-    </a>
-
-</body>
-</html>
+    </tbody>
+</table>
