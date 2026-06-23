@@ -4,6 +4,7 @@ from flask_login import UserMixin, LoginManager, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 from datetime import datetime
+import random
 import os
 
 app = Flask(__name__)
@@ -101,6 +102,23 @@ def logout():
 @app.route("/")
 @login_required
 def index():
+    quotes = [
+        "Small expenses become big savings when shared fairly.",
+        "Track every rupee, build every dream.",
+        "Saving together is growing together.",
+        "Shared expenses create stronger friendships.",
+        "Transparency builds trust.",
+        "Spend wisely, live happily.",
+        "Every rupee has a purpose.",
+        "Budget today for a better tomorrow.",
+        "Good roommates share expenses clearly.",
+        "Financial discipline creates freedom."
+    ]
+
+    current_date = datetime.now().strftime("%d %B %Y")
+    current_day = datetime.now().strftime("%A")
+    quote = random.choice(quotes)
+
     expenses = Expense.query.order_by(Expense.id.desc()).all()
 
     total = sum(e.amount for e in expenses)
@@ -148,7 +166,10 @@ def index():
         share=share,
         balances=balances,
         person_totals=person_totals,
-        settlements=settlements
+        settlements=settlements,
+        current_date=current_date,
+        current_day=current_day,
+        quote=quote
     )
 
 # ---------------- ADD EXPENSE ----------------

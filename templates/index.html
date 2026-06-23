@@ -24,6 +24,32 @@
 <body>
 <div class="container">
 
+    <!-- Top Section -->
+    <div class="alert alert-dark text-center mb-4">
+        <h4>{{ current_day }}</h4>
+        <h5>{{ current_date }}</h5>
+    </div>
+
+    <div class="alert alert-warning text-center mb-4">
+        <h5>💡 "{{ quote }}"</h5>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="alert alert-primary">
+                <strong>Total Transactions:</strong>
+                {{ expenses|length }}
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="alert alert-success">
+                <strong>Last Updated:</strong>
+                {{ current_date }}
+            </div>
+        </div>
+    </div>
+
     <!-- Add Expense Form -->
     <h2>Add Expense</h2>
     <form action="/add" method="POST" class="mb-4">
@@ -43,6 +69,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary">Add Expense</button>
+        <a href="/download_excel" class="btn btn-success ms-2">Download Excel</a>
     </form>
 
     <!-- Expense History -->
