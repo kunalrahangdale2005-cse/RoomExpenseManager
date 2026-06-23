@@ -124,7 +124,7 @@
             {% for person, balance in balances.items() %}
             <tr>
                 <td>{{ person }}</td>
-                <td>₹{{ share + balance }}</td>
+                <td>₹{{ person_totals.get(person, 0) }}</td>
                 <td>₹{{ share }}</td>
                 <td>₹{{ balance }}</td>
                 <td>{{ status_messages[person] }}</td>
@@ -148,12 +148,12 @@
     <u>Step 3: Individual Calculation</u><br>
     {% for person, balance in balances.items() %}
         <strong>{{ person }}</strong><br>
-        Paid: ₹{{ share + balance }}<br>
+        Paid: ₹{{ person_totals.get(person, 0) }}<br>
         Share: ₹{{ share }}<br>
         {% if balance > 0 %}
             Receives: ₹{{ balance }}<br><br>
         {% elif balance < 0 %}
-            Pays: ₹{{ balance * -1 }}<br><br>
+            Pays: ₹{{ -balance }}<br><br>
         {% else %}
             Settled<br><br>
         {% endif %}
@@ -163,7 +163,6 @@
     <u>Step 4: Final Settlement</u><br>
     Settlement should be done on the 27th of every month.
 </div>
-
 
     <!-- Final Settlement -->
     <h2 class="mt-4">Final Settlement</h2>
