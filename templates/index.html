@@ -74,32 +74,32 @@
 
     <!-- Expense History -->
     <h2 class="mt-4">Expense History</h2>
-<table class="table table-striped table-bordered">
-    <thead class="table-dark">
-        <tr>
-            <th>Date</th>
-            <th>Day</th>
-            <th>Time</th>
-            <th>Person</th>
-            <th>Item</th>
-            <th>Category</th>
-            <th>Amount</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for e in expenses %}
-        <tr>
-            <td>{{ e.date|datetimeformat("%d-%m-%Y") }}</td>
-            <td>{{ e.date|datetimeformat("%A") }}</td>
-            <td>{{ e.date|datetimeformat("%I:%M %p") }}</td>
-            <td>{{ e.person }}</td>
-            <td>{{ e.item }}</td>
-            <td>{{ e.category }}</td>
-            <td>₹{{ e.amount }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Time</th>
+                <th>Person</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in expenses %}
+            <tr>
+                <td>{{ e.date|datetimeformat("%d-%m-%Y") }}</td>
+                <td>{{ e.date|datetimeformat("%A") }}</td>
+                <td>{{ e.date|datetimeformat("%I:%M %p") }}</td>
+                <td>{{ e.person }}</td>
+                <td>{{ e.item }}</td>
+                <td>{{ e.category }}</td>
+                <td>₹{{ e.amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <!-- Room Expense Summary -->
     <h2 class="mt-4">Room Expense Summary</h2>
@@ -127,15 +127,7 @@
                 <td>₹{{ share + balance }}</td>
                 <td>₹{{ share }}</td>
                 <td>₹{{ balance }}</td>
-                <td>
-                    {% if balance > 0 %}
-                        Will Receive ₹{{ balance|round(2) }}
-                    {% elif balance < 0 %}
-                        Pay ₹{{ (balance * -1)|round(2) }}
-                    {% else %}
-                        Settled
-                    {% endif %}
-                </td>
+                <td>{{ status_messages[person] }}</td>
             </tr>
             {% endfor %}
         </tbody>

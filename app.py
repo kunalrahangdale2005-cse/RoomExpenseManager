@@ -8,6 +8,8 @@ import random
 import os
 
 app = Flask(__name__)
+
+# ---------------- JINJA FILTER ----------------
 @app.template_filter("datetimeformat")
 def datetimeformat(value, format="%d-%m-%Y"):
     try:
@@ -139,6 +141,18 @@ def index():
     for person in roommates:
         balances[person] = person_totals.get(person, 0) - share
 
+    # ---------------- SMART STATUS ----------------
+    status_messages = {}
+    for person, balance in balances.items():
+        if balance > 0:
+            status_messages[person] = f"Receive ₹{round(balance,2)} from others"
+        elif balance < 0:
+            main_receiver = max(balances, key=balances.get)
+            status_messages[person] = f"Pay {main_receiver} ₹{round(abs(balance),2)}"
+        else:
+            status_messages[person] = "Settled"
+
+    # ---------------- FINAL SETTLEMENT ----------------
     settlements = []
     receivers = []
     payers = []
@@ -160,9 +174,8 @@ def index():
             amount = min(pay_amount, receiver_amount)
 
             settlements.append(
-    f"{receiver_name} receives ₹{round(amount, 2)} from {payer}"
-)
-
+                f"{receiver_name} receives ₹{round(amount, 2)} from {payer}"
+            )
 
             pay_amount -= amount
             receiver[1] -= amount
@@ -177,7 +190,8 @@ def index():
         settlements=settlements,
         current_date=current_date,
         current_day=current_day,
-        quote=quote
+        quote=quote,
+        status_messages=status_messages
     )
 
 # ---------------- ADD EXPENSE ----------------
