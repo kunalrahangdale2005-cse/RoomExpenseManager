@@ -131,7 +131,7 @@ def index():
     expenses = Expense.query.order_by(Expense.id.desc()).all()
 
     total = sum(e.amount for e in expenses)
-    share = total / len(roommates) if total > 0 and len(roommates) > 0 else 0
+    share = round(total / len(roommates), 2) if roommates else 0
 
     person_totals = {}
     for e in expenses:
@@ -173,8 +173,9 @@ def index():
 
             amount = min(pay_amount, receiver_amount)
 
+            # FIX: wording changed
             settlements.append(
-                f"{receiver_name} receives ₹{round(amount, 2)} from {payer}"
+                f"{payer} pays ₹{round(amount, 2)} to {receiver_name}"
             )
 
             pay_amount -= amount
@@ -191,7 +192,8 @@ def index():
         current_date=current_date,
         current_day=current_day,
         quote=quote,
-        status_messages=status_messages
+        status_messages=status_messages,
+        roommates=roommates   # FIX: pass roommates to template
     )
 
 # ---------------- ADD EXPENSE ----------------
@@ -235,7 +237,7 @@ def download_excel():
         df.to_excel(writer, sheet_name="Expenses", index=False)
 
         total = sum(e.amount for e in expenses)
-        share = total / len(roommates) if total > 0 and len(roommates) > 0 else 0
+        share = round(total / len(roommates), 2) if roommates else 0
 
         person_totals = {}
         for e in expenses:

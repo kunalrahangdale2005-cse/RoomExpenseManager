@@ -95,7 +95,7 @@
                 <td>{{ e.person }}</td>
                 <td>{{ e.item }}</td>
                 <td>{{ e.category }}</td>
-                <td>₹{{ e.amount }}</td>
+                <td>₹{{ "%.2f"|format(e.amount) }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -104,10 +104,10 @@
     <!-- Room Expense Summary -->
     <h2 class="mt-4">Room Expense Summary</h2>
     <div class="alert alert-primary">
-        Total Room Expense: <strong>₹{{ total }}</strong>
+        Total Room Expense: <strong>₹{{ "%.2f"|format(total) }}</strong>
     </div>
     <div class="alert alert-success">
-        Equal Share Per Person: <strong>₹{{ share }}</strong>
+        Equal Share Per Person: <strong>₹{{ "%.2f"|format(share) }}</strong>
     </div>
 
     <table class="table table-bordered">
@@ -124,9 +124,17 @@
             {% for person, balance in balances.items() %}
             <tr>
                 <td>{{ person }}</td>
-                <td>₹{{ person_totals.get(person, 0) }}</td>
-                <td>₹{{ share }}</td>
-                <td>₹{{ balance }}</td>
+                <td>₹{{ "%.2f"|format(person_totals.get(person, 0)) }}</td>
+                <td>₹{{ "%.2f"|format(share) }}</td>
+                <td>
+                    {% if balance > 0 %}
+                        +₹{{ balance|round(2) }}
+                    {% elif balance < 0 %}
+                        -₹{{ (-balance)|round(2) }}
+                    {% else %}
+                        ₹0
+                    {% endif %}
+                </td>
                 <td>{{ status_messages[person] }}</td>
             </tr>
             {% endfor %}
@@ -138,22 +146,22 @@
 
     <!-- Step 1: Total Expense -->
     <u>Step 1: Total Expense</u><br>
-    Total Expense = ₹{{ total }}<br><br>
+    Total Expense = ₹{{ "%.2f"|format(total) }}<br><br>
 
     <!-- Step 2: Equal Share -->
     <u>Step 2: Equal Share</u><br>
-    ₹{{ total }} ÷ {{ roommates|length }} = ₹{{ share }} per person<br><br>
+    ₹{{ "%.2f"|format(total) }} ÷ {{ roommates|length }} = ₹{{ "%.2f"|format(share) }} per person<br><br>
 
     <!-- Step 3: Individual Calculation -->
     <u>Step 3: Individual Calculation</u><br>
     {% for person, balance in balances.items() %}
         <strong>{{ person }}</strong><br>
-        Paid: ₹{{ person_totals.get(person, 0) }}<br>
-        Share: ₹{{ share }}<br>
+        Paid: ₹{{ "%.2f"|format(person_totals.get(person, 0)) }}<br>
+        Share: ₹{{ "%.2f"|format(share) }}<br>
         {% if balance > 0 %}
-            Receives: ₹{{ balance }}<br><br>
+            Receives: ₹{{ balance|round(2) }}<br><br>
         {% elif balance < 0 %}
-            Pays: ₹{{ -balance }}<br><br>
+            Pays: ₹{{ (-balance)|round(2) }}<br><br>
         {% else %}
             Settled<br><br>
         {% endif %}
@@ -161,7 +169,8 @@
 
     <!-- Step 4: Final Settlement -->
     <u>Step 4: Final Settlement</u><br>
-    Settlement should be done on the 27th of every month.
+    <strong>Settlement Date:</strong> 27th of every month.<br>
+    All roommates should clear their dues before the settlement date.
 </div>
 
     <!-- Final Settlement -->
@@ -173,11 +182,17 @@
             </tr>
         </thead>
         <tbody>
-            {% for s in settlements %}
-            <tr>
-                <td>{{ s }}</td>
-            </tr>
-            {% endfor %}
+            {% if settlements %}
+                {% for s in settlements %}
+                <tr>
+                    <td>💰 {{ s }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td>All expenses are settled.</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
 
