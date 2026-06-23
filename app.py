@@ -170,15 +170,15 @@ for payer, pay_amount in payers:
         pay_amount -= amount
         receiver[1] -= amount
 
-   return render_template(
-    "index.html",
-    expenses=expenses,
-    total=total,
-    share=share,
-    balances=balances,
-    person_totals=person_totals,
-    settlements=settlements
-)
+    return render_template(
+        "index.html",
+        expenses=expenses,
+        total=total,
+        share=share,
+        balances=balances,
+        person_totals=person_totals,
+        settlements=settlements
+    )
 
 # ---------------- ADD EXPENSE ----------------
 
