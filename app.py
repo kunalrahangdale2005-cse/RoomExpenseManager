@@ -8,6 +8,13 @@ import random
 import os
 
 app = Flask(__name__)
+@app.template_filter("datetimeformat")
+def datetimeformat(value, format="%d-%m-%Y"):
+    try:
+        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime(format)
+    except:
+        return value
+
 app.secret_key = "secretkey"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///expenses.db'
@@ -153,8 +160,9 @@ def index():
             amount = min(pay_amount, receiver_amount)
 
             settlements.append(
-                f"{payer} pays {receiver_name} ₹{round(amount, 2)}"
-            )
+    f"{receiver_name} receives ₹{round(amount, 2)} from {payer}"
+)
+
 
             pay_amount -= amount
             receiver[1] -= amount
