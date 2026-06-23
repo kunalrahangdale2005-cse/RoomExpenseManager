@@ -134,13 +134,36 @@
     </table>
 
     <div class="alert alert-info mt-3">
-        <strong>How it works:</strong><br><br>
-        Money Paid = Total amount spent by that person.<br>
-        Your Share = Equal room expense share.<br>
-        Positive amount means the person will receive money.<br>
-        Negative amount means the person has to pay money.<br>
-        Final settlement should be done on the 27th of every month.
-    </div>
+    <strong>How it works:</strong><br><br>
+
+    <!-- Step 1: Total Expense -->
+    <u>Step 1: Total Expense</u><br>
+    Total Expense = ₹{{ total }}<br><br>
+
+    <!-- Step 2: Equal Share -->
+    <u>Step 2: Equal Share</u><br>
+    ₹{{ total }} ÷ {{ roommates|length }} = ₹{{ share }} per person<br><br>
+
+    <!-- Step 3: Individual Calculation -->
+    <u>Step 3: Individual Calculation</u><br>
+    {% for person, balance in balances.items() %}
+        <strong>{{ person }}</strong><br>
+        Paid: ₹{{ share + balance }}<br>
+        Share: ₹{{ share }}<br>
+        {% if balance > 0 %}
+            Receives: ₹{{ balance }}<br><br>
+        {% elif balance < 0 %}
+            Pays: ₹{{ balance * -1 }}<br><br>
+        {% else %}
+            Settled<br><br>
+        {% endif %}
+    {% endfor %}
+
+    <!-- Step 4: Final Settlement -->
+    <u>Step 4: Final Settlement</u><br>
+    Settlement should be done on the 27th of every month.
+</div>
+
 
     <!-- Final Settlement -->
     <h2 class="mt-4">Final Settlement</h2>
