@@ -19,7 +19,9 @@ def datetimeformat(value, format="%d-%m-%Y"):
 
 app.secret_key = "secretkey"
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///expenses.db'
+# ✅ PostgreSQL connection string from Render
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://roomexpense_db_user:oREPnRZ0v3W76yRfaSJb0G5Gx4xNH02K@dpg-d8tb64jtqb8s73ff0er0-a.virginia-postgres.render.com/roomexpense_db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
