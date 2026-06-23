@@ -68,13 +68,7 @@ def register():
             return redirect(url_for("register"))
 
         hashed_password = generate_password_hash(password)
-
-        user = User(
-            username=username,
-            password=hashed_password,
-            person_name=person_name
-        )
-
+        user = User(username=username, password=hashed_password, person_name=person_name)
         db.session.add(user)
         db.session.commit()
 
@@ -99,6 +93,25 @@ def login():
         flash("Invalid Username or Password")
 
     return render_template("login.html")
+
+# ---------------- CREATE PASSWORD ----------------
+@app.route("/create-password", methods=["GET", "POST"])
+def create_password():
+    if request.method == "POST":
+        username = request.form["username"]
+        new_password = request.form["password"]
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            flash("User not found")
+            return redirect(url_for("create_password"))
+
+        user.password = generate_password_hash(new_password)
+        db.session.commit()
+        flash("Password updated successfully")
+        return redirect(url_for("login"))
+
+    return render_template("create_password.html")
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -129,7 +142,6 @@ def index():
     quote = random.choice(quotes)
 
     expenses = Expense.query.order_by(Expense.id.desc()).all()
-
     total = sum(e.amount for e in expenses)
     share = round(total / len(roommates), 2) if roommates else 0
 
@@ -141,7 +153,6 @@ def index():
     for person in roommates:
         balances[person] = person_totals.get(person, 0) - share
 
-    # ---------------- SMART STATUS ----------------
     status_messages = {}
     for person, balance in balances.items():
         if balance > 0:
@@ -152,7 +163,6 @@ def index():
         else:
             status_messages[person] = "Settled"
 
-    # ---------------- FINAL SETTLEMENT ----------------
     settlements = []
     receivers = []
     payers = []
@@ -167,17 +177,10 @@ def index():
         for receiver in receivers:
             if pay_amount <= 0:
                 break
-
             receiver_name = receiver[0]
             receiver_amount = receiver[1]
-
             amount = min(pay_amount, receiver_amount)
-
-            # FIX: wording changed
-            settlements.append(
-                f"{payer} pays ₹{round(amount, 2)} to {receiver_name}"
-            )
-
+            settlements.append(f"{payer} pays ₹{round(amount, 2)} to {receiver_name}")
             pay_amount -= amount
             receiver[1] -= amount
 
@@ -193,7 +196,7 @@ def index():
         current_day=current_day,
         quote=quote,
         status_messages=status_messages,
-        roommates=roommates   # FIX: pass roommates to template
+        roommates=roommates
     )
 
 # ---------------- ADD EXPENSE ----------------
@@ -214,7 +217,6 @@ def add_expense():
 
     db.session.add(expense)
     db.session.commit()
-
     return redirect(url_for("index"))
 
 # ---------------- DOWNLOAD EXCEL ----------------
@@ -222,7 +224,6 @@ def add_expense():
 @login_required
 def download_excel():
     expenses = Expense.query.all()
-
     df = pd.DataFrame([{
         "Date": e.date,
         "Person": e.person,
@@ -232,26 +233,20 @@ def download_excel():
     } for e in expenses])
 
     file_name = "expenses.xlsx"
-
     with pd.ExcelWriter(file_name, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Expenses", index=False)
-
         total = sum(e.amount for e in expenses)
         share = round(total / len(roommates), 2) if roommates else 0
-
         person_totals = {}
         for e in expenses:
             person_totals[e.person] = person_totals.get(e.person, 0) + e.amount
-
         balances = {}
         for person in roommates:
             balances[person] = person_totals.get(person, 0) - share
-
         summary = pd.DataFrame({
             "Person": list(balances.keys()),
             "Balance": list(balances.values())
         })
-
         summary.to_excel(writer, sheet_name="Summary", index=False)
 
     return send_file(file_name, as_attachment=True)
