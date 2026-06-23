@@ -158,25 +158,27 @@
 
     <tbody>
 
-    {% for person, balance in balances.items() %}
+  <h2 class="mt-4">Final Settlement</h2>
+
+<table class="table table-bordered">
+
+    <thead class="table-dark">
+        <tr>
+            <th>Settlement Details</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for s in settlements %}
     <tr>
-
-        <td>{{ person }}</td>
-
-        <td>
-        {% if balance > 0 %}
-            Receive ₹{{ balance }}
-        {% elif balance < 0 %}
-            Pay ₹{{ balance * -1 }}
-        {% else %}
-            Settled
-        {% endif %}
-        </td>
-
+        <td>{{ s }}</td>
     </tr>
     {% endfor %}
 
     </tbody>
+
+</table>
 
 </table>
 </div>

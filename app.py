@@ -138,16 +138,47 @@ def index():
             person_totals.get(person, 0)
             - share
         )
+        settlements = []
 
-    return render_template(
-        "index.html",
-        expenses=expenses,
-        total=total,
-        share=share,
-        balances=balances,
-        person_totals=person_totals
-    )
+receivers = []
+payers = []
 
+for person, balance in balances.items():
+
+    if balance > 0:
+        receivers.append([person, balance])
+
+    elif balance < 0:
+        payers.append([person, abs(balance)])
+
+for payer, pay_amount in payers:
+
+    for receiver in receivers:
+
+        if pay_amount <= 0:
+            break
+
+        receiver_name = receiver[0]
+        receiver_amount = receiver[1]
+
+        amount = min(pay_amount, receiver_amount)
+
+        settlements.append(
+            f"{payer} pays {receiver_name} ₹{round(amount,2)}"
+        )
+
+        pay_amount -= amount
+        receiver[1] -= amount
+
+   return render_template(
+    "index.html",
+    expenses=expenses,
+    total=total,
+    share=share,
+    balances=balances,
+    person_totals=person_totals,
+    settlements=settlements
+)
 
 # ---------------- ADD EXPENSE ----------------
 
