@@ -115,9 +115,7 @@ def logout():
 @login_required
 def index():
 
-   expenses = Expense.query.order_by(
-    Expense.id.desc()
-).all()
+    expenses = Expense.query.all()
 
     total = sum(e.amount for e in expenses)
 
