@@ -22,166 +22,120 @@
 </head>
 
 <body>
-
 <div class="container">
-<h2>Add Expense</h2>
 
-<form action="/add" method="POST" class="mb-4">
+    <!-- Add Expense Form -->
+    <h2>Add Expense</h2>
+    <form action="/add" method="POST" class="mb-4">
+        <div class="mb-3">
+            <label>Item</label>
+            <input type="text" name="item" class="form-control" required>
+        </div>
 
-    <div class="mb-3">
-        <label>Item</label>
-        <input type="text" name="item" class="form-control" required>
+        <div class="mb-3">
+            <label>Category</label>
+            <input type="text" name="category" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Amount</label>
+            <input type="number" step="0.01" name="amount" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add Expense</button>
+    </form>
+
+    <!-- Expense History -->
+    <h2 class="mt-4">Expense History</h2>
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Date</th>
+                <th>Person</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in expenses %}
+            <tr>
+                <td>{{ e.date }}</td>
+                <td>{{ e.person }}</td>
+                <td>{{ e.item }}</td>
+                <td>{{ e.category }}</td>
+                <td>₹{{ e.amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Room Expense Summary -->
+    <h2 class="mt-4">Room Expense Summary</h2>
+    <div class="alert alert-primary">
+        Total Room Expense: <strong>₹{{ total }}</strong>
+    </div>
+    <div class="alert alert-success">
+        Equal Share Per Person: <strong>₹{{ share }}</strong>
     </div>
 
-    <div class="mb-3">
-        <label>Category</label>
-        <input type="text" name="category" class="form-control" required>
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Money Paid</th>
+                <th>Your Share</th>
+                <th>Difference</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for person, balance in balances.items() %}
+            <tr>
+                <td>{{ person }}</td>
+                <td>₹{{ share + balance }}</td>
+                <td>₹{{ share }}</td>
+                <td>₹{{ balance }}</td>
+                <td>
+                    {% if balance > 0 %}
+                        Will Receive ₹{{ balance|round(2) }}
+                    {% elif balance < 0 %}
+                        Pay ₹{{ (balance * -1)|round(2) }}
+                    {% else %}
+                        Settled
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="alert alert-info mt-3">
+        <strong>How it works:</strong><br><br>
+        Money Paid = Total amount spent by that person.<br>
+        Your Share = Equal room expense share.<br>
+        Positive amount means the person will receive money.<br>
+        Negative amount means the person has to pay money.<br>
+        Final settlement should be done on the 27th of every month.
     </div>
 
-    <div class="mb-3">
-        <label>Amount</label>
-        <input type="number" step="0.01" name="amount" class="form-control" required>
-    </div>
+    <!-- Final Settlement -->
+    <h2 class="mt-4">Final Settlement</h2>
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Settlement Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in settlements %}
+            <tr>
+                <td>{{ s }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-    <button type="submit" class="btn btn-primary">
-        Add Expense
-    </button>
-
-</form>
-<h2 class="mt-4">Expense History</h2>
-
-<table class="table table-striped table-bordered">
-
-    <thead class="table-dark">
-        <tr>
-            <th>Date</th>
-            <th>Person</th>
-            <th>Item</th>
-            <th>Category</th>
-            <th>Amount</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-    {% for e in expenses %}
-    <tr>
-        <td>{{ e.date }}</td>
-        <td>{{ e.person }}</td>
-        <td>{{ e.item }}</td>
-        <td>{{ e.category }}</td>
-        <td>₹{{ e.amount }}</td>
-    </tr>
-    {% endfor %}
-
-    </tbody>
-
-</table>
-<h2 class="mt-4">Room Expense Summary</h2>
-
-<div class="alert alert-primary">
-    Total Room Expense:
-    <strong>₹{{ total }}</strong>
 </div>
-
-<div class="alert alert-success">
-    Equal Share Per Person:
-    <strong>₹{{ share }}</strong>
-</div>
-
-<table class="table table-bordered">
-    <thead class="table-dark">
-        <tr>
-            <th>Name</th>
-            <th>Money Paid</th>
-            <th>Your Share</th>
-            <th>Difference</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-
-    <tbody>
-    {% for person, balance in balances.items() %}
-    <tr>
-
-        <td>{{ person }}</td>
-
-        <td>
-            ₹{{ share + balance }}
-        </td>
-
-        <td>
-            ₹{{ share }}
-        </td>
-
-        <td>
-            ₹{{ balance }}
-        </td>
-
-        <td>
-            {% if balance > 0 %}
-                Will Receive Money
-            {% elif balance < 0 %}
-                Need To Pay
-            {% else %}
-                Settled
-            {% endif %}
-        </td>
-
-    </tr>
-    {% endfor %}
-    </tbody>
-
-</table>
-<div class="alert alert-info mt-3">
-    <strong>How it works:</strong><br><br>
-
-    Money Paid = Total amount spent by that person.<br>
-
-    Your Share = Equal room expense share.<br>
-
-    Positive amount means the person will receive money.<br>
-
-    Negative amount means the person has to pay money.<br>
-
-    Final settlement should be done on the 27th of every month.
-</div>
-<h2 class="mt-4">Final Settlement</h2>
-
-<table class="table table-bordered">
-    <thead class="table-dark">
-        <tr>
-            <th>Name</th>
-            <th>Settlement</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-  <h2 class="mt-4">Final Settlement</h2>
-
-<table class="table table-bordered">
-
-    <thead class="table-dark">
-        <tr>
-            <th>Settlement Details</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-    {% for s in settlements %}
-    <tr>
-        <td>{{ s }}</td>
-    </tr>
-    {% endfor %}
-
-    </tbody>
-
-</table>
-
-</table>
-</div>
-
 </body>
 </html>
