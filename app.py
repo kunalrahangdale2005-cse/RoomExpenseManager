@@ -15,7 +15,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # ---------------- USER MODEL ----------------
-
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
@@ -23,7 +22,6 @@ class User(db.Model, UserMixin):
     person_name = db.Column(db.String(100), nullable=False)
 
 # ---------------- EXPENSE MODEL ----------------
-
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.String(50))
@@ -39,7 +37,6 @@ roommates = [
 ]
 
 # ---------------- LOGIN MANAGER ----------------
-
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -49,12 +46,9 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # ---------------- REGISTER ----------------
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
-
     if request.method == "POST":
-
         username = request.form["username"]
         password = request.form["password"]
         person_name = request.form["person_name"]
@@ -80,21 +74,16 @@ def register():
     return render_template("register.html")
 
 # ---------------- LOGIN ----------------
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
-
         username = request.form["username"]
         password = request.form["password"]
 
         user = User.query.filter_by(username=username).first()
 
         if user and check_password_hash(user.password, password):
-
             login_user(user)
-
             return redirect(url_for("index"))
 
         flash("Invalid Username or Password")
@@ -102,7 +91,6 @@ def login():
     return render_template("login.html")
 
 # ---------------- LOGOUT ----------------
-
 @app.route("/logout")
 @login_required
 def logout():
@@ -110,65 +98,48 @@ def logout():
     return redirect(url_for("login"))
 
 # ---------------- HOME ----------------
-
 @app.route("/")
 @login_required
 def index():
-
-    expenses = Expense.query.order_by(
-        Expense.id.desc()
-    ).all()
+    expenses = Expense.query.order_by(Expense.id.desc()).all()
 
     total = sum(e.amount for e in expenses)
-
     share = total / len(roommates) if total > 0 else 0
 
     person_totals = {}
-
     for e in expenses:
-        person_totals[e.person] = (
-            person_totals.get(e.person, 0)
-            + e.amount
-        )
+        person_totals[e.person] = person_totals.get(e.person, 0) + e.amount
 
     balances = {}
-
     for person in roommates:
-        balances[person] = (
-            person_totals.get(person, 0)
-            - share
-        )
-        settlements = []
+        balances[person] = person_totals.get(person, 0) - share
 
-receivers = []
-payers = []
+    settlements = []
+    receivers = []
+    payers = []
 
-for person, balance in balances.items():
+    for person, balance in balances.items():
+        if balance > 0:
+            receivers.append([person, balance])
+        elif balance < 0:
+            payers.append([person, abs(balance)])
 
-    if balance > 0:
-        receivers.append([person, balance])
+    for payer, pay_amount in payers:
+        for receiver in receivers:
+            if pay_amount <= 0:
+                break
 
-    elif balance < 0:
-        payers.append([person, abs(balance)])
+            receiver_name = receiver[0]
+            receiver_amount = receiver[1]
 
-for payer, pay_amount in payers:
+            amount = min(pay_amount, receiver_amount)
 
-    for receiver in receivers:
+            settlements.append(
+                f"{payer} pays {receiver_name} ₹{round(amount, 2)}"
+            )
 
-        if pay_amount <= 0:
-            break
-
-        receiver_name = receiver[0]
-        receiver_amount = receiver[1]
-
-        amount = min(pay_amount, receiver_amount)
-
-        settlements.append(
-            f"{payer} pays {receiver_name} ₹{round(amount,2)}"
-        )
-
-        pay_amount -= amount
-        receiver[1] -= amount
+            pay_amount -= amount
+            receiver[1] -= amount
 
     return render_template(
         "index.html",
@@ -181,11 +152,9 @@ for payer, pay_amount in payers:
     )
 
 # ---------------- ADD EXPENSE ----------------
-
 @app.route("/add", methods=["POST"])
 @login_required
 def add_expense():
-
     item = request.form["item"]
     category = request.form["category"]
     amount = float(request.form["amount"])
@@ -204,11 +173,9 @@ def add_expense():
     return redirect(url_for("index"))
 
 # ---------------- DOWNLOAD EXCEL ----------------
-
 @app.route("/download_excel")
 @login_required
 def download_excel():
-
     expenses = Expense.query.all()
 
     df = pd.DataFrame([{
@@ -222,19 +189,16 @@ def download_excel():
     file_name = "expenses.xlsx"
 
     with pd.ExcelWriter(file_name, engine="openpyxl") as writer:
-
         df.to_excel(writer, sheet_name="Expenses", index=False)
 
         total = sum(e.amount for e in expenses)
-        share = total / len(roommates)
+        share = total / len(roommates) if total > 0 else 0
 
         person_totals = {}
-
         for e in expenses:
             person_totals[e.person] = person_totals.get(e.person, 0) + e.amount
 
         balances = {}
-
         for person in roommates:
             balances[person] = person_totals.get(person, 0) - share
 
@@ -243,19 +207,12 @@ def download_excel():
             "Balance": list(balances.values())
         })
 
-        summary.to_excel(
-            writer,
-            sheet_name="Summary",
-            index=False
-        )
+        summary.to_excel(writer, sheet_name="Summary", index=False)
 
     return send_file(file_name, as_attachment=True)
 
 # ---------------- MAIN ----------------
-
 if __name__ == "__main__":
-
     with app.app_context():
         db.create_all()
-
     app.run(debug=True)
