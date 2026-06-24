@@ -138,11 +138,12 @@ def index():
     total = sum(e.amount for e in expenses)
     share = round(total / len(roommates), 2) if roommates else 0
 
+    # ---------------- Person Totals ----------------
     person_totals = {}
     for e in expenses:
         person_totals[e.person] = person_totals.get(e.person, 0) + e.amount
 
-    # ---------------- NET SETTLEMENT (Splitwise style) ----------------
+    # ---------------- NET SETTLEMENT ----------------
     balances = {}
     for person in roommates:
         balances[person] = person_totals.get(person, 0) - share
@@ -178,7 +179,7 @@ def index():
             pay_amount -= amount
             receiver[1] -= amount
 
-    # ---------------- DETAILED EXPENSE SPLIT (Your method) ----------------
+    # ---------------- DETAILED EXPENSE SPLIT ----------------
     detailed_settlements = []
     for e in expenses:
         split_amount = round(e.amount / len(roommates), 2)
@@ -186,6 +187,7 @@ def index():
             if person != e.person:
                 detailed_settlements.append(f"{person} pays ₹{split_amount} to {e.person}")
 
+    # ---------------- RENDER TEMPLATE ----------------
     return render_template(
         "index.html",
         expenses=expenses,
