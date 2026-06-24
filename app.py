@@ -8,13 +8,13 @@ from zoneinfo import ZoneInfo
 import random
 import os
 
+# ✅ Create the Flask app FIRST
 app = Flask(__name__)
 app.secret_key = "secretkey"
 
-# ✅ PostgreSQL connection string from Render
+# ✅ Database setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://roomexpense_db_user:oREPnRZ0v3W76yRfaSJb0G5Gx4xNH02K@dpg-d8tb64jtqb8s73ff0er0-a.virginia-postgres.render.com/roomexpense_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
 
 # ---------------- USER MODEL ----------------
@@ -138,12 +138,12 @@ def index():
     total = sum(e.amount for e in expenses)
     share = round(total / len(roommates), 2) if roommates else 0
 
-    # ---------------- Person Totals ----------------
+    # Person Totals
     person_totals = {}
     for e in expenses:
         person_totals[e.person] = person_totals.get(e.person, 0) + e.amount
 
-    # ---------------- NET SETTLEMENT ----------------
+    # Net Settlement
     balances = {}
     for person in roommates:
         balances[person] = person_totals.get(person, 0) - share
@@ -179,7 +179,7 @@ def index():
             pay_amount -= amount
             receiver[1] -= amount
 
-    # ---------------- DETAILED EXPENSE SPLIT ----------------
+    # Detailed Expense Split
     detailed_settlements = []
     for e in expenses:
         split_amount = round(e.amount / len(roommates), 2)
@@ -187,12 +187,12 @@ def index():
             if person != e.person:
                 detailed_settlements.append(f"{person} pays ₹{split_amount} to {e.person}")
 
-    # ---------------- RENDER TEMPLATE ----------------
+    # Render Template
     return render_template(
         "index.html",
         expenses=expenses,
-        total=total,
-        share=share,
+        total=round(total, 2),
+        share=round(share, 2),
         balances=balances,
         person_totals=person_totals,
         settlements=settlements,
