@@ -6,13 +6,10 @@ import pandas as pd
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import random
-import os
 
-# ✅ Create the Flask app FIRST
 app = Flask(__name__)
 app.secret_key = "secretkey"
 
-# ✅ Database setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://roomexpense_db_user:oREPnRZ0v3W76yRfaSJb0G5Gx4xNH02K@dpg-d8tb64jtqb8s73ff0er0-a.virginia-postgres.render.com/roomexpense_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -87,25 +84,6 @@ def login():
 
     return render_template("login.html")
 
-# ---------------- CREATE PASSWORD ----------------
-@app.route("/create-password", methods=["GET", "POST"])
-def create_password():
-    if request.method == "POST":
-        username = request.form["username"]
-        new_password = request.form["password"]
-
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            flash("User not found")
-            return redirect(url_for("create_password"))
-
-        user.password = generate_password_hash(new_password)
-        db.session.commit()
-        flash("Password updated successfully")
-        return redirect(url_for("login"))
-
-    return render_template("create_password.html")
-
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 @login_required
@@ -153,11 +131,12 @@ def index():
         if balance > 0:
             status_messages[person] = f"Receive ₹{round(balance,2)} from others"
         elif balance < 0:
-            main_receiver = max(balances, key=balances.get)
+            main_receiver = max(balances, key=balances.get) if balances else "No one"
             status_messages[person] = f"Pay {main_receiver} ₹{round(abs(balance),2)}"
         else:
             status_messages[person] = "Settled"
 
+    # ---------------- Final Settlement (structured dicts) ----------------
     settlements = []
     receivers = []
     payers = []
@@ -175,19 +154,60 @@ def index():
             receiver_name = receiver[0]
             receiver_amount = receiver[1]
             amount = min(pay_amount, receiver_amount)
-            settlements.append(f"{payer} pays ₹{round(amount, 2)} to {receiver_name}")
-            pay_amount -= amount
-            receiver[1] -= amount
+            if amount > 0:
+                settlements.append({
+                    "payer": payer,
+                    "receiver": receiver_name,
+                    "amount": round(amount, 2),
+                    "remarks": "Remaining amount after all mutual adjustments"
+                })
+                pay_amount -= amount
+                receiver[1] -= amount
 
-    # Detailed Expense Split
+    # ---------------- Detailed Expense Split (structured dicts) ----------------
     detailed_settlements = []
     for e in expenses:
         split_amount = round(e.amount / len(roommates), 2)
+        split_details = []
         for person in roommates:
             if person != e.person:
-                detailed_settlements.append(f"{person} pays ₹{split_amount} to {e.person}")
+                split_details.append(f"{person} → ₹{split_amount}")
+        detailed_settlements.append({
+            "expense": e.item,
+            "paid_by": e.person,
+            "amount": round(e.amount, 2),
+            "split_details": ", ".join(split_details)
+        })
 
-    # Render Template
+    # ---------------- Settlement Calculation ----------------
+    calculation_details = {}
+    for person in roommates:
+        received_list = []
+        paid_list = []
+        total_received = 0
+        total_paid = 0
+
+        for ds in detailed_settlements:
+            for detail in ds["split_details"].split(", "):
+                if detail.startswith(person):
+                    amount = float(detail.split("₹")[1])
+                    paid_list.append(f"{detail} to {ds['paid_by']}")
+                    total_paid += amount
+                elif ds["paid_by"] == person:
+                    amount = float(detail.split("₹")[1])
+                    received_list.append(f"{detail} from {ds['expense']}")
+                    total_received += amount
+
+        net_amount = round(total_received - total_paid, 2)
+
+        calculation_details[person] = {
+            "received_list": received_list,
+            "paid_list": paid_list,
+            "total_received": round(total_received, 2),
+            "total_paid": round(total_paid, 2),
+            "net_amount": net_amount
+        }
+
     return render_template(
         "index.html",
         expenses=expenses,
@@ -201,7 +221,8 @@ def index():
         current_day=current_day,
         quote=quote,
         status_messages=status_messages,
-        roommates=roommates
+        roommates=roommates,
+        calculation_details=calculation_details
     )
 
 # ---------------- ADD EXPENSE ----------------
@@ -239,25 +260,9 @@ def download_excel():
 
     file_name = "expenses.xlsx"
     with pd.ExcelWriter(file_name, engine="openpyxl") as writer:
+        # Expenses sheet
         df.to_excel(writer, sheet_name="Expenses", index=False)
+
+        # Summary sheet
         total = sum(e.amount for e in expenses)
         share = round(total / len(roommates), 2) if roommates else 0
-        person_totals = {}
-        for e in expenses:
-            person_totals[e.person] = person_totals.get(e.person, 0) + e.amount
-        balances = {}
-        for person in roommates:
-            balances[person] = person_totals.get(person, 0) - share
-        summary = pd.DataFrame({
-            "Person": list(balances.keys()),
-            "Balance": list(balances.values())
-        })
-        summary.to_excel(writer, sheet_name="Summary", index=False)
-
-    return send_file(file_name, as_attachment=True)
-
-# ---------------- MAIN ----------------
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
