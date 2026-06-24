@@ -4,24 +4,15 @@ from flask_login import UserMixin, LoginManager, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import random
 import os
 
 app = Flask(__name__)
-
-# ---------------- JINJA FILTER ----------------
-@app.template_filter("datetimeformat")
-def datetimeformat(value, format="%d-%m-%Y"):
-    try:
-        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime(format)
-    except:
-        return value
-
 app.secret_key = "secretkey"
 
 # ✅ PostgreSQL connection string from Render
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://roomexpense_db_user:oREPnRZ0v3W76yRfaSJb0G5Gx4xNH02K@dpg-d8tb64jtqb8s73ff0er0-a.virginia-postgres.render.com/roomexpense_db'
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -139,8 +130,8 @@ def index():
         "Financial discipline creates freedom."
     ]
 
-    current_date = datetime.now().strftime("%d %B %Y")
-    current_day = datetime.now().strftime("%A")
+    current_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%d %B %Y")
+    current_day = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%A")
     quote = random.choice(quotes)
 
     expenses = Expense.query.order_by(Expense.id.desc()).all()
@@ -151,6 +142,7 @@ def index():
     for e in expenses:
         person_totals[e.person] = person_totals.get(e.person, 0) + e.amount
 
+    # ---------------- NET SETTLEMENT (Splitwise style) ----------------
     balances = {}
     for person in roommates:
         balances[person] = person_totals.get(person, 0) - share
@@ -186,6 +178,14 @@ def index():
             pay_amount -= amount
             receiver[1] -= amount
 
+    # ---------------- DETAILED EXPENSE SPLIT (Your method) ----------------
+    detailed_settlements = []
+    for e in expenses:
+        split_amount = round(e.amount / len(roommates), 2)
+        for person in roommates:
+            if person != e.person:
+                detailed_settlements.append(f"{person} pays ₹{split_amount} to {e.person}")
+
     return render_template(
         "index.html",
         expenses=expenses,
@@ -194,6 +194,7 @@ def index():
         balances=balances,
         person_totals=person_totals,
         settlements=settlements,
+        detailed_settlements=detailed_settlements,
         current_date=current_date,
         current_day=current_day,
         quote=quote,
@@ -210,7 +211,7 @@ def add_expense():
     amount = float(request.form["amount"])
 
     expense = Expense(
-        date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        date=datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"),
         person=current_user.person_name,
         item=item,
         category=category,

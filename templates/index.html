@@ -34,22 +34,6 @@
         <h5>💡 "{{ quote }}"</h5>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="alert alert-primary">
-                <strong>Total Transactions:</strong>
-                {{ expenses|length }}
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="alert alert-success">
-                <strong>Last Updated:</strong>
-                {{ current_date }}
-            </div>
-        </div>
-    </div>
-
     <!-- Add Expense Form -->
     <h2>Add Expense</h2>
     <form action="/add" method="POST" class="mb-4">
@@ -101,8 +85,8 @@
         </tbody>
     </table>
 
-    <!-- Room Expense Summary -->
-    <h2 class="mt-4">Room Expense Summary</h2>
+    <!-- Expense Summary -->
+    <h2 class="mt-4">Expense Summary</h2>
     <div class="alert alert-primary">
         Total Room Expense: <strong>₹{{ "%.2f"|format(total) }}</strong>
     </div>
@@ -115,66 +99,20 @@
             <tr>
                 <th>Name</th>
                 <th>Money Paid</th>
-                <th>Your Share</th>
-                <th>Difference</th>
-                <th>Status</th>
             </tr>
         </thead>
         <tbody>
-            {% for person, balance in balances.items() %}
+            {% for person, total in person_totals.items() %}
             <tr>
                 <td>{{ person }}</td>
-                <td>₹{{ "%.2f"|format(person_totals.get(person, 0)) }}</td>
-                <td>₹{{ "%.2f"|format(share) }}</td>
-                <td>
-                    {% if balance > 0 %}
-                        +₹{{ balance|round(2) }}
-                    {% elif balance < 0 %}
-                        -₹{{ (-balance)|round(2) }}
-                    {% else %}
-                        ₹0
-                    {% endif %}
-                </td>
-                <td>{{ status_messages[person] }}</td>
+                <td>₹{{ "%.2f"|format(total) }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <div class="alert alert-info mt-3">
-    <strong>How it works:</strong><br><br>
-
-    <!-- Step 1: Total Expense -->
-    <u>Step 1: Total Expense</u><br>
-    Total Expense = ₹{{ "%.2f"|format(total) }}<br><br>
-
-    <!-- Step 2: Equal Share -->
-    <u>Step 2: Equal Share</u><br>
-    ₹{{ "%.2f"|format(total) }} ÷ {{ roommates|length }} = ₹{{ "%.2f"|format(share) }} per person<br><br>
-
-    <!-- Step 3: Individual Calculation -->
-    <u>Step 3: Individual Calculation</u><br>
-    {% for person, balance in balances.items() %}
-        <strong>{{ person }}</strong><br>
-        Paid: ₹{{ "%.2f"|format(person_totals.get(person, 0)) }}<br>
-        Share: ₹{{ "%.2f"|format(share) }}<br>
-        {% if balance > 0 %}
-            Receives: ₹{{ balance|round(2) }}<br><br>
-        {% elif balance < 0 %}
-            Pays: ₹{{ (-balance)|round(2) }}<br><br>
-        {% else %}
-            Settled<br><br>
-        {% endif %}
-    {% endfor %}
-
-    <!-- Step 4: Final Settlement -->
-    <u>Step 4: Final Settlement</u><br>
-    <strong>Settlement Date:</strong> 27th of every month.<br>
-    All roommates should clear their dues before the settlement date.
-</div>
-
-    <!-- Final Settlement -->
-    <h2 class="mt-4">Final Settlement</h2>
+    <!-- Final Settlement (Net Settlement) -->
+    <h2 class="mt-4">Final Settlement (Net)</h2>
     <table class="table table-bordered">
         <thead class="table-dark">
             <tr>
@@ -191,6 +129,29 @@
             {% else %}
                 <tr>
                     <td>All expenses are settled.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <!-- Detailed Expense Split -->
+    <h2 class="mt-4">Detailed Expense Split</h2>
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if detailed_settlements %}
+                {% for ds in detailed_settlements %}
+                <tr>
+                    <td>📌 {{ ds }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td>No detailed settlements available.</td>
                 </tr>
             {% endif %}
         </tbody>
